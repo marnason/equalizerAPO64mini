@@ -24,8 +24,8 @@
 
 #include "../helpers/LogHelper.h"
 #include "../helpers/RegistryHelper.h"
-#include "../helpers/StringHelper.h"
 #include "../DeviceAPOInfo.h"
+#include "../EndpointGainStore.h"
 #include "EqualizerAPO.h"
 
 using namespace std;
@@ -49,6 +49,9 @@ EqualizerAPO::EqualizerAPO(IUnknown* pUnkOuter)
 
 	allowSilentBufferModification = false;
 	inputChannelCount = 0;
+	initialGainDb = 0.0;
+	appliesGain = false;
+	gainWatcherStopEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr);
 
 	childAPO = NULL;
 	childRT = NULL;
@@ -59,6 +62,9 @@ EqualizerAPO::EqualizerAPO(IUnknown* pUnkOuter)
 
 EqualizerAPO::~EqualizerAPO()
 {
+	stopGainWatcher();
+	if (gainWatcherStopEvent)
+		CloseHandle(gainWatcherStopEvent);
 	InterlockedDecrement(&instCount);
 
 	resetChild();
@@ -96,8 +102,12 @@ HRESULT EqualizerAPO::GetLatency(HNSTIME* pTime)
 
 HRESULT EqualizerAPO::Initialize(UINT32 cbDataSize, BYTE* pbyData)
 {
+	stopGainWatcher();
 	LogHelper::reset();
 	allowSilentBufferModification = false;
+	appliesGain = false;
+	initialGainDb = 0.0;
+	endpointGuid.clear();
 
 	TraceF(L"Initialize");
 
@@ -129,36 +139,28 @@ HRESULT EqualizerAPO::Initialize(UINT32 cbDataSize, BYTE* pbyData)
 		LogF(L"Can't read endpoint guid");
 		return hr;
 	}
-	wstring deviceGuid = var.pwszVal;
-	TraceF(L"Endpoint GUID: %s", deviceGuid.c_str());
-
-	wstring deviceTestPipeName;
-	try
-	{
-		if (RegistryHelper::valueExists(APP_REGPATH, L"DeviceTestPipeName"))
-			deviceTestPipeName = RegistryHelper::readValue(APP_REGPATH, L"DeviceTestPipeName");
-	}
-	catch (RegistryException e)
-	{
-		LogF(L"%s", e.getMessage().c_str());
-	}
-
-	if (deviceTestPipeName != L"")
-		sendMessage(deviceTestPipeName, deviceGuid, apoGuid, "Initialize");
+	endpointGuid = var.pwszVal;
+	PropVariantClear(&var);
+	TraceF(L"Endpoint GUID: %s", endpointGuid.c_str());
 
 	wstring childApoGuid;
 
 	try
 	{
 		DeviceAPOInfo apoInfo;
-		if (apoInfo.load(deviceGuid))
+		if (apoInfo.load(endpointGuid))
 		{
+			const DeviceAPOInfo::InstallState& installState = apoInfo.getCurrentInstallState();
 			if (apoGuid == EQUALIZERAPO_PRE_MIX_GUID)
 				childApoGuid = apoInfo.getPreMixChildGuid();
 			else
 				childApoGuid = apoInfo.getPostMixChildGuid();
 
-			allowSilentBufferModification = apoInfo.getCurrentInstallState().allowSilentBufferModification;
+			allowSilentBufferModification = installState.allowSilentBufferModification;
+			appliesGain = apoInfo.isInput()
+				? apoGuid == EQUALIZERAPO_PRE_MIX_GUID
+				: (installState.installPostMix ? apoGuid == EQUALIZERAPO_POST_MIX_GUID
+					: apoGuid == EQUALIZERAPO_PRE_MIX_GUID);
 		}
 	}
 	catch (RegistryException e)
@@ -167,6 +169,8 @@ HRESULT EqualizerAPO::Initialize(UINT32 cbDataSize, BYTE* pbyData)
 	}
 
 	TraceF(L"Child APO GUID: %s", childApoGuid.c_str());
+	initialGainDb = appliesGain ? readEndpointGainDb() : 0.0;
+	TraceF(L"Preamp stage: %s, gain: %.3f dB", appliesGain ? L"active" : L"pass-through", initialGainDb);
 
 	if (childApoGuid != L"" && childApoGuid != APOGUID_NULL && childApoGuid != APOGUID_NOKEY && childApoGuid != APOGUID_NOVALUE)
 	{
@@ -212,8 +216,6 @@ HRESULT EqualizerAPO::Initialize(UINT32 cbDataSize, BYTE* pbyData)
 
 		TraceF(L"Successfully created and initialized child APO");
 
-		if (deviceTestPipeName != L"")
-			sendMessage(deviceTestPipeName, deviceGuid, apoGuid, "ChildAPO");
 	}
 
 	return S_OK;
@@ -358,7 +360,12 @@ HRESULT EqualizerAPO::LockForProcess(UINT32 u32NumInputConnections,
 		realChannelCount = inFormat.dwSamplesPerFrame;
 
 	inputChannelCount = inFormat.dwSamplesPerFrame;
-	processor.initialize(realChannelCount, outFormat.dwSamplesPerFrame);
+	if (appliesGain)
+		initialGainDb = readEndpointGainDb();
+	processor.initialize(realChannelCount, outFormat.dwSamplesPerFrame,
+		static_cast<unsigned>(outFormat.fFramesPerSecond), initialGainDb);
+	if (appliesGain)
+		startGainWatcher();
 
 	return hr;
 }
@@ -399,30 +406,69 @@ void EqualizerAPO::resetChild()
 	}
 }
 
-void EqualizerAPO::sendMessage(std::wstring& deviceTestPipeName, const std::wstring& deviceGuid, GUID apoGuid, const std::string& phase)
+double EqualizerAPO::readEndpointGainDb() const
 {
-	string message = "{\"deviceGuid\":\"" + StringHelper::toString(deviceGuid, CP_UTF8) + "\", \"stage\":\"" + (apoGuid == EQUALIZERAPO_PRE_MIX_GUID ? "PreMix" : "PostMix") + "\", \"phase\":\"" + phase + "\"}";
+	try
+	{
+		return EndpointGainStore::toDb(EndpointGainStore::readGainMilliDb(endpointGuid));
+	}
+	catch (const std::exception&)
+	{
+		LogF(L"Could not read endpoint gain; using 0 dB");
+		return 0.0;
+	}
+}
 
-	HANDLE pipe = CreateFileW((L"\\\\.\\pipe\\" + deviceTestPipeName).c_str(), GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-	if (pipe == INVALID_HANDLE_VALUE)
-	{
-		if (WaitNamedPipeW((L"\\\\.\\pipe\\" + deviceTestPipeName).c_str(), 1000))
-			pipe = CreateFileW((L"\\\\.\\pipe\\" + deviceTestPipeName).c_str(), GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-	}
-	if (pipe != INVALID_HANDLE_VALUE)
-	{
-		DWORD bytesWritten;
-		if (!WriteFile(pipe, message.c_str(), (int)message.length(), &bytesWritten, NULL))
-			LogF(L"Could not write to pipe: %s", StringHelper::getSystemErrorString(GetLastError()).c_str());
+void EqualizerAPO::startGainWatcher()
 
-		FlushFileBuffers(pipe);
-		CloseHandle(pipe);
-	}
-	else
+{
+	if (!gainWatcherStopEvent || gainWatcherThread.joinable())
+		return;
+	ResetEvent(gainWatcherStopEvent);
+	gainWatcherThread = std::thread(&EqualizerAPO::watchGainChanges, this);
+}
+
+void EqualizerAPO::stopGainWatcher()
+
+{
+	if (!gainWatcherThread.joinable())
+		return;
+	SetEvent(gainWatcherStopEvent);
+	gainWatcherThread.join();
+}
+
+void EqualizerAPO::watchGainChanges()
+
+{
+	HKEY key = nullptr;
+	if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, EndpointGainStore::REGISTRY_PATH, 0,
+		KEY_NOTIFY | KEY_WOW64_64KEY, &key) != ERROR_SUCCESS)
 	{
-		LogF(L"Could not connect to named pipe: %s", StringHelper::getSystemErrorString(GetLastError()).c_str());
-		deviceTestPipeName = L"";
+		LogF(L"Could not watch endpoint gain registry key");
+		return;
 	}
+
+	HANDLE changedEvent = CreateEventW(nullptr, FALSE, FALSE, nullptr);
+	if (!changedEvent)
+	{
+		RegCloseKey(key);
+		return;
+	}
+
+	HANDLE events[] = { gainWatcherStopEvent, changedEvent };
+	while (RegNotifyChangeKeyValue(key, TRUE, REG_NOTIFY_CHANGE_LAST_SET | REG_NOTIFY_CHANGE_NAME,
+		changedEvent, TRUE) == ERROR_SUCCESS)
+	{
+		const DWORD waitResult = WaitForMultipleObjects(2, events, FALSE, INFINITE);
+		if (waitResult == WAIT_OBJECT_0)
+			break;
+		if (waitResult != WAIT_OBJECT_0 + 1)
+			break;
+		processor.setGainDb(readEndpointGainDb());
+	}
+
+	CloseHandle(changedEvent);
+	RegCloseKey(key);
 }
 
 #pragma AVRT_CODE_BEGIN

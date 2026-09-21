@@ -1,27 +1,33 @@
 # EqualizerAPO64mini
 
-EqualizerAPO64mini is a Windows Audio Processing Object derived from Equalizer APO. The repository is being reduced to a small utility that applies one independent preamp gain to each playback or capture endpoint.
+EqualizerAPO64mini is a focused Windows Audio Processing Object derived from Equalizer APO. Its only audio effect is an independent preamp gain for each playback and capture endpoint.
 
-This is an intermediate simplification milestone. The APO currently runs at a neutral `0 dB` gain and intentionally has no gain configuration application or configuration file. `DeviceSelector` is retained temporarily to install and remove the APO on Windows audio endpoints.
+The control application lists available endpoints, installs or removes the APO, and stores a gain from `-60.0 dB` to `+30.0 dB` in `0.1 dB` steps. Gain changes are published to the running APO without restarting the Windows audio service. Installation changes are applied explicitly and restart the service when possible.
 
-## Current behavior
+## Audio behavior
 
-- Preserves Equalizer APO's endpoint registration, installation, removal, child-APO compatibility, diagnostics, and real-time integration.
-- Uses a bit-transparent bypass when the gain is `0 dB`.
-- Contains the preamp processor and the existing `10^(dB/20)` gain conversion needed by the future configuration application.
-- Does not provide EQ, convolution, VST hosting, routing, delays, channel selection, loudness correction, expressions, includes, stages, analysis, benchmarking, or update checking.
-- Does not read or modify legacy Equalizer APO configuration files.
+- Uses Equalizer APO's established endpoint registration, child-APO integration, and real-time callback path.
+- Applies the configured gain to every interleaved channel using `10^(dB/20)`.
+- Ramps live changes over 10 ms to avoid discontinuities.
+- Bypasses multiplication at a stable `0 dB` and copies only when input and output buffers differ.
+- Performs no allocation, locking, registry access, parsing, or I/O in `APOProcess`.
+- Treats missing or invalid settings as `0 dB`.
+- Does not read, migrate, overwrite, or delete Equalizer APO's legacy `config.txt` or configuration directory.
+
+The product contains no equalization, convolution, VST hosting, routing, delay, channel selection, loudness correction, expression language, analysis tool, benchmark, or update checker.
 
 ## Supported builds
 
-The GitHub Actions workflow builds and packages:
+GitHub Actions builds and packages four Windows variants:
 
 - x64 AVX2
 - x64 AVX-512
 - x64 AVX10.1
 - ARM64
 
-The supported projects are `Common`, `EqualizerAPO`, and `DeviceSelector`. Visual Studio 2022, the Windows SDK, Qt 6.10.1, and NSIS are used by the build and packaging pipeline. For local installer builds, `build.bat` accepts `QTX64_BIN` and `QTARM64_BIN` pointing to the matching Qt `bin` directories.
+The solution contains Common, EqualizerAPO, and EqualizerAPO Control. Local builds require Visual Studio 2022 with the `v143` toolset, a Windows SDK, Qt 6.10.1, and NSIS. `build.bat` creates all four installers; `QTX64_BIN` and `QTARM64_BIN` can override the corresponding Qt `bin` directories.
+
+Every successful push to `main` publishes an immutable dated prerelease with all four installers and SHA-256 checksums. Pull requests build and verify the code without publishing a release.
 
 ## License
 

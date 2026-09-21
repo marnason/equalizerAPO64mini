@@ -298,7 +298,7 @@ bool DeviceAPOInfo::load(const wstring& deviceGuid, wstring defaultDeviceGuid)
 				{
 					version = RegistryHelper::readValue(childApoPath L"\\" + deviceGuid, versionValueName);
 					if (version != installVersion)
-						throw RegistryException(L"Unsupported version of APO installation detected! Please uninstall newer Equalizer APO before using this version of Device Selector.");
+						throw RegistryException(L"Unsupported version of APO installation detected. Uninstall the newer Equalizer APO before using this version.");
 				}
 				else
 				{
@@ -736,50 +736,4 @@ wstring DeviceAPOInfo::getPreMixChildGuid()
 wstring DeviceAPOInfo::getPostMixChildGuid()
 {
 	return postMixChildGuid;
-}
-
-void DeviceAPOInfo::testAPOInstallation()
-{
-	IMMDeviceEnumerator* enumerator = NULL;
-	IMMDevice* device = NULL;
-	IAudioClient* audioClient = NULL;
-	WAVEFORMATEX* format = NULL;
-
-	HRESULT hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&enumerator);
-	if (FAILED(hr))
-		fail(L"CoCreateInstance for IMMDeviceEnumerator", hr);
-	SCOPE_EXIT{enumerator->Release(); };
-
-	hr = enumerator->GetDevice(((input ? L"{0.0.1.00000000}." : L"{0.0.0.00000000}.") + deviceGuid).c_str(), &device);
-	if (FAILED(hr))
-		fail(L"GetDevice", hr);
-	SCOPE_EXIT{device->Release(); };
-
-	DWORD state;
-	hr = device->GetState(&state);
-	if (FAILED(hr))
-		fail(L"GetState", hr);
-	if (state & DEVICE_STATE_DISABLED || state & DEVICE_STATE_UNPLUGGED)
-		return;
-
-	hr = device->Activate(__uuidof(IAudioClient), CLSCTX_ALL, NULL, (void**)&audioClient);
-	if (FAILED(hr))
-		fail(L"Activate", hr);
-	SCOPE_EXIT{audioClient->Release(); };
-
-	hr = audioClient->GetMixFormat(&format);
-	if (FAILED(hr))
-		fail(L"GetMixFormat", hr);
-	SCOPE_EXIT{CoTaskMemFree(format); };
-
-	hr = audioClient->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, 1000000 /*100 ms*/, 0, format, NULL);
-	if (FAILED(hr))
-		fail(L"Initialize", hr);
-}
-
-void DeviceAPOInfo::fail(const wstring& functionName, HRESULT hr)
-{
-	_com_error err(hr);
-	const wchar_t* msg = err.ErrorMessage();
-	throw DeviceException(functionName + L" failed for device \"" + deviceName + L"\" (" + msg + L")");
 }

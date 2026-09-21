@@ -95,10 +95,8 @@ public:
 	InstallState& getSelectedInstallState();
 	std::wstring getPreMixChildGuid();
 	std::wstring getPostMixChildGuid();
-	void testAPOInstallation();
 
 private:
-	void fail(const std::wstring& functionName, HRESULT hr);
 
 	std::wstring deviceName;
 	std::wstring connectionName;
@@ -124,21 +122,4 @@ private:
 	InstallState currentInstallState;
 	// selection in GUI
 	InstallState selectedInstallState;
-};
-
-class DeviceException
-{
-public:
-	DeviceException(const std::wstring& message)
-		: message(message)
-	{
-	}
-
-	std::wstring getMessage()
-	{
-		return message;
-	}
-
-private:
-	std::wstring message;
 };

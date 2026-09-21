@@ -1,4 +1,4 @@
-name: Build EqualizerAPO
+name: Build and nightly release
 
 on:
   push:
@@ -14,188 +14,223 @@ env:
   BUILD_CONFIGURATION: Release
 
 jobs:
-  build:
+  verify-source:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v7
+      - name: Verify repository shape
+        shell: pwsh
+        run: ./ci/verify-source.ps1
+
+  build-apo:
+    needs: verify-source
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: windows-x64-avx2
+          - artifact: apo-x64-avx2
             os: windows-2022
             platform: x64
-            simd_variant: avx2
             instruction_set: AdvancedVectorExtensions2
-            qt_arch: win64_msvc2022_64
-            dev_arch: x64
-          - name: windows-x64-avx512
+          - artifact: apo-x64-avx512
             os: windows-2022
             platform: x64
-            simd_variant: avx512
             instruction_set: AdvancedVectorExtensions512
-            qt_arch: win64_msvc2022_64
-            dev_arch: x64
-          - name: windows-x64-avx10_1
+          - artifact: apo-x64-avx10_1
             os: windows-2022
             platform: x64
-            simd_variant: avx10_1
             instruction_set: AdvancedVectorExtensions101
-            qt_arch: win64_msvc2022_64
-            dev_arch: x64
-          - name: windows-arm64
+          - artifact: apo-arm64
             os: windows-11-arm
             platform: ARM64
-            simd_variant: neon
             instruction_set: ""
-            qt_arch: win64_msvc2022_arm64
-            dev_arch: x86_arm64
-
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Add MSBuild to PATH
-        uses: microsoft/setup-msbuild@v2
+      - uses: actions/checkout@v7
+      - uses: microsoft/setup-msbuild@v3
         with:
           msbuild-architecture: ${{ matrix.platform }}
-
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: '6.10.1'
-          host: ${{ matrix.platform == 'ARM64' && 'windows_arm64' || 'windows' }}
-          target: desktop
-          arch: ${{ matrix.qt_arch }}
-          dir: '${{ github.workspace }}\Qt'
-          install-deps: 'true'
-          set-env: 'true'
-          archives: 'qtbase qtsvg qttools'
-          cache: 'true'
-
-      - name: Build APO libraries
+      - name: Build APO
         shell: pwsh
         run: |
-          $parameters = @(
-            "/m",
+          $properties = @(
+            "/m", "/t:Rebuild",
             "/p:Configuration=${{ env.BUILD_CONFIGURATION }}",
-            "/p:Platform=${{ matrix.platform }}",
-            "/p:PlatformToolset=v143",
-            "/t:Rebuild"
+            "/p:Platform=${{ matrix.platform }}"
           )
           if ("${{ matrix.platform }}" -eq "x64") {
-            $parameters += "/p:EnableEnhancedInstructionSet=${{ matrix.instruction_set }}"
+            $properties += "/p:EnableEnhancedInstructionSet=${{ matrix.instruction_set }}"
           }
-          foreach ($project in @("Common.vcxproj", "EqualizerAPO\EqualizerAPO.vcxproj")) {
-            msbuild $project @parameters
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          }
-
-      - name: Configure MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: ${{ matrix.dev_arch }}
-
-      - name: Build DeviceSelector
-        shell: pwsh
+          msbuild Common.vcxproj @properties
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          msbuild EqualizerAPO/EqualizerAPO.vcxproj @properties
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify runtime primitives
+        if: matrix.artifact == 'apo-x64-avx2'
+        shell: cmd
         run: |
-          $buildDir = "build-DeviceSelector-${{ matrix.platform }}"
-          New-Item -ItemType Directory -Force -Path $buildDir | Out-Null
-          Set-Location $buildDir
-          lrelease ..\DeviceSelector\DeviceSelector.pro
-          if ("${{ matrix.platform }}" -eq "x64") {
-            $flag = switch ("${{ matrix.simd_variant }}") {
-              "avx512" { "/arch:AVX512" }
-              "avx10_1" { "/arch:AVX10.1" }
-              default { "/arch:AVX2" }
-            }
-            qmake ..\DeviceSelector\DeviceSelector.pro -r "CONFIG+=release" "QMAKE_CXXFLAGS-=/arch:AVX2" "QMAKE_CXXFLAGS+=$flag"
-          } else {
-            qmake ..\DeviceSelector\DeviceSelector.pro -r "CONFIG+=release"
-          }
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          nmake
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          windeployqt release\DeviceSelector.exe --release --no-opengl-sw
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      - name: Package binaries
-        shell: pwsh
-        run: |
-          $artifactPath = "${{ github.workspace }}\artifacts\EqualizerAPO-${{ matrix.platform }}-${{ matrix.simd_variant }}"
-          New-Item -ItemType Directory -Force -Path $artifactPath | Out-Null
-          Copy-Item "EqualizerAPO\${{ matrix.platform }}\Release\EqualizerAPO.dll" $artifactPath
-          Copy-Item "build-DeviceSelector-${{ matrix.platform }}\release\*" $artifactPath -Recurse
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+          for /f "usebackq tokens=*" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -property installationPath`) do set VS_PATH=%%i
+          call "%VS_PATH%\Common7\Tools\VsDevCmd.bat" -arch=x64
+          powershell -NoProfile -ExecutionPolicy Bypass -File ci\verify-runtime.ps1
+      - uses: actions/upload-artifact@v7
         with:
-          name: EqualizerAPO-${{ matrix.platform }}-${{ matrix.simd_variant }}
-          path: artifacts/EqualizerAPO-${{ matrix.platform }}-${{ matrix.simd_variant }}/
+          name: ${{ matrix.artifact }}
+          path: EqualizerAPO/${{ matrix.platform }}/Release/EqualizerAPO.dll
           if-no-files-found: error
-          retention-days: 90
 
-  create-installer:
-    needs: build
-    runs-on: windows-2025
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+  build-control:
+    needs: verify-source
     strategy:
       matrix:
         include:
-          - platform: x64
-            simd_variant: avx2
-            setup_file: Setup64
-            installer_name: x64-avx2
-          - platform: x64
-            simd_variant: avx512
-            setup_file: Setup64
-            installer_name: x64-avx512
-          - platform: x64
-            simd_variant: avx10_1
-            setup_file: Setup64
-            installer_name: x64-avx10_1
-          - platform: ARM64
-            simd_variant: neon
-            setup_file: SetupARM64
-            installer_name: arm64
-
+          - artifact: control-x64
+            os: windows-2022
+            platform: x64
+            qt_arch: win64_msvc2022_64
+            qt_host: windows
+            dev_arch: x64
+          - artifact: control-arm64
+            os: windows-11-arm
+            platform: ARM64
+            qt_arch: win64_msvc2022_arm64
+            qt_host: windows_arm64
+            dev_arch: arm64
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: microsoft/setup-msbuild@v3
         with:
-          name: EqualizerAPO-${{ matrix.platform }}-${{ matrix.simd_variant }}
-          path: artifact
+          msbuild-architecture: ${{ matrix.platform }}
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.10.1"
+          host: ${{ matrix.qt_host }}
+          target: desktop
+          arch: ${{ matrix.qt_arch }}
+          dir: '${{ github.workspace }}\Qt'
+          install-deps: true
+          set-env: true
+          archives: qtbase qttools
+          cache: true
+      - name: Build Common
+        run: msbuild Common.vcxproj /m /t:Rebuild /p:Configuration=Release /p:Platform=${{ matrix.platform }}
+      - name: Build control application
+        shell: cmd
+        run: |
+          for /f "usebackq tokens=*" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -property installationPath`) do set VS_PATH=%%i
+          call "%VS_PATH%\Common7\Tools\VsDevCmd.bat" -arch=${{ matrix.dev_arch }}
+          mkdir build-control
+          cd build-control
+          qmake ..\DeviceSelector\DeviceSelector.pro CONFIG+=release
+          if errorlevel 1 exit /b %errorlevel%
+          nmake
+          if errorlevel 1 exit /b %errorlevel%
+          windeployqt release\EqualizerAPO.exe --release --no-opengl-sw
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.artifact }}
+          path: build-control/release/
+          if-no-files-found: error
 
-      - name: Prepare installer files
+  create-installer:
+    needs: [build-apo, build-control]
+    if: github.event_name != 'pull_request'
+    runs-on: windows-2025
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: x64-avx2
+            apo_artifact: apo-x64-avx2
+            control_artifact: control-x64
+            setup: Setup64
+          - variant: x64-avx512
+            apo_artifact: apo-x64-avx512
+            control_artifact: control-x64
+            setup: Setup64
+          - variant: x64-avx10_1
+            apo_artifact: apo-x64-avx10_1
+            control_artifact: control-x64
+            setup: Setup64
+          - variant: arm64
+            apo_artifact: apo-arm64
+            control_artifact: control-arm64
+            setup: SetupARM64
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: ${{ matrix.apo_artifact }}
+          path: staging/bin
+      - uses: actions/download-artifact@v8
+        with:
+          name: ${{ matrix.control_artifact }}
+          path: staging/control
+      - name: Prepare payload
         shell: pwsh
         run: |
-          $bin = "${{ github.workspace }}\${{ matrix.platform }}\Release"
-          $lib = "${{ github.workspace }}\lib64"
-          New-Item -ItemType Directory -Force -Path $bin, $lib | Out-Null
-          Copy-Item artifact\EqualizerAPO.dll, artifact\DeviceSelector.exe $bin
-          Get-ChildItem artifact | Where-Object { $_.Name -notin @("EqualizerAPO.dll", "DeviceSelector.exe") } | Copy-Item -Destination $lib -Recurse
-
-      - name: Install NSIS
-        uses: negrutiu/nsis-install@v2
-
-      - name: Install NsArray
-        uses: negrutiu/nsis-install-plugin@v1
+          Copy-Item staging/control/EqualizerAPO.exe staging/bin/
+          New-Item -ItemType Directory -Force staging/qt | Out-Null
+          Get-ChildItem staging/control | Where-Object Name -ne "EqualizerAPO.exe" | Copy-Item -Destination staging/qt -Recurse
+      - uses: negrutiu/nsis-install@v2
+      - uses: negrutiu/nsis-install-plugin@v1
         with:
           url: https://nsis.sourceforge.io/mediawiki/images/9/97/NsArray.zip
-
-      - name: Install NSISpcre
-        uses: negrutiu/nsis-install-plugin@v1
+      - uses: negrutiu/nsis-install-plugin@v1
         with:
           url: https://github.com/mazinsw/NSISpcre/archive/refs/heads/master.zip
-
       - name: Build installer
-        run: makensis ${{ github.workspace }}\Setup\${{ matrix.setup_file }}.nsi
-
-      - name: Upload installer
-        uses: actions/upload-artifact@v4
+        shell: pwsh
+        run: |
+          makensis "/DBINPATH=$pwd\staging\bin" "/DLIBPATH=$pwd\staging\qt" "/DINSTALLER_OUTFILE=EqualizerAPO-nightly-${{ matrix.variant }}.exe" "Setup\${{ matrix.setup }}.nsi"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify installer payload
+        shell: pwsh
+        run: ./ci/verify-package.ps1 -Installer "Setup/EqualizerAPO-nightly-${{ matrix.variant }}.exe" -Variant "${{ matrix.variant }}"
+      - uses: actions/upload-artifact@v7
         with:
-          name: EqualizerAPO_Setup-${{ matrix.installer_name }}
-          path: Setup/*.exe
+          name: installer-${{ matrix.variant }}
+          path: Setup/EqualizerAPO-nightly-${{ matrix.variant }}.exe
           if-no-files-found: error
-          retention-days: 90
+
+  nightly-release:
+    needs: create-installer
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: installer-*
+          path: release
+          merge-multiple: true
+      - name: Create checksums and release metadata
+        id: metadata
+        shell: bash
+        run: |
+          cd release
+          sha256sum EqualizerAPO-nightly-*.exe > SHA256SUMS.txt
+          commit_time=$(git -C .. show -s --format=%cI "$GITHUB_SHA")
+          timestamp=$(date -u -d "$commit_time" +%Y%m%d-%H%M%S)
+          display_time=$(date -u -d "$commit_time" '+%Y-%m-%d %H:%M UTC')
+          short_sha=${GITHUB_SHA::7}
+          echo "tag=nightly-${timestamp}-${short_sha}" >> "$GITHUB_OUTPUT"
+          echo "title=Nightly ${display_time} (${short_sha})" >> "$GITHUB_OUTPUT"
+      - name: Publish immutable nightly
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.metadata.outputs.tag }}
+          TITLE: ${{ steps.metadata.outputs.title }}
+        shell: bash
+        run: |
+          notes=$(printf 'Automated nightly for [%s](%s/commit/%s).\n\n[Workflow run](%s/actions/runs/%s)\n\nIncludes x64 AVX2, x64 AVX-512, x64 AVX10.1, and ARM64 installers.' "$GITHUB_SHA" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "$GITHUB_SHA" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "$GITHUB_RUN_ID")
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "$TITLE" --notes "$notes" --prerelease
+            gh release upload "$TAG" release/* --clobber
+          else
+            gh release create "$TAG" release/* --target "$GITHUB_SHA" --title "$TITLE" --notes "$notes" --prerelease
+          fi

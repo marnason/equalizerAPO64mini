@@ -26,9 +26,9 @@ class PreampProcessor
 public:
 	PreampProcessor();
 
-	void initialize(unsigned inputChannelCount, unsigned outputChannelCount);
+	void initialize(unsigned inputChannelCount, unsigned outputChannelCount, unsigned sampleRate, double initialGainDb);
 	void setGainDb(double dbGain);
-	void process(float* output, const float* input, unsigned frameCount) const;
+	void process(float* output, const float* input, unsigned frameCount);
 
 	unsigned getInputChannelCount() const { return inputChannelCount; }
 	unsigned getOutputChannelCount() const { return outputChannelCount; }
@@ -36,5 +36,10 @@ public:
 private:
 	unsigned inputChannelCount;
 	unsigned outputChannelCount;
-	std::atomic<double> gain;
+	unsigned rampFrameCount;
+	std::atomic<double> targetGain;
+	double currentGain;
+	double rampTarget;
+	double rampStep;
+	unsigned rampFramesRemaining;
 };

@@ -164,6 +164,8 @@ Section "-Install"
   
   ;Rename before delete as these files may be in use
   !insertmacro RenameAndDelete "$INSTDIR\EqualizerAPO.dll"
+  !insertmacro RenameAndDelete "$INSTDIR\EqualizerAPO.exe"
+  !insertmacro RenameAndDelete "$INSTDIR\DeviceSelector.exe"
   !insertmacro RenameAndDelete "$INSTDIR\libfftw3-3.dll"
   !insertmacro RenameAndDelete "$INSTDIR\libfftw3.dll"
   !insertmacro RenameAndDelete "$INSTDIR\libsndfile-1.dll"
@@ -183,23 +185,20 @@ Section "-Install"
   !insertmacro RenameAndDelete "$INSTDIR\vcruntime140_1.dll"
   
   File "${BINPATH}\EqualizerAPO.dll"
-  File "${BINPATH}\DeviceSelector.exe"
+  File "${BINPATH}\EqualizerAPO.exe"
+  File "..\License.txt"
   File "${LIBPATH}\Qt6Core.dll"
   File "${LIBPATH}\Qt6Gui.dll"
-  File "${LIBPATH}\Qt6Svg.dll"
   File "${LIBPATH}\Qt6Widgets.dll"
   
   CreateDirectory "$INSTDIR\qt"
-  CreateDirectory "$INSTDIR\qt\iconengines"
   CreateDirectory "$INSTDIR\qt\platforms"
-  CreateDirectory "$INSTDIR\qt\styles"
-  
-  File /oname=qt\iconengines\qsvgicon.dll "${LIBPATH}\iconengines\qsvgicon.dll"
+
   File /oname=qt\platforms\qwindows.dll "${LIBPATH}\platforms\qwindows.dll"
-  File /oname=qt\styles\qmodernwindowsstyle.dll "${LIBPATH}\styles\qmodernwindowsstyle.dll"
 
   ReadRegStr $OLDINSTDIR HKLM ${REGPATH} "InstallPath"
   WriteRegStr HKLM ${REGPATH} "InstallPath" "$INSTDIR"
+  WriteRegDWORD HKLM "${REGPATH}\Gains" "SchemaVersion" 1
   
   ReadRegStr $0 HKLM ${REGPATH} "EnableTrace"
   ${If} $0 == ""
@@ -211,7 +210,7 @@ Section "-Install"
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
   ;Create shortcuts
   CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
-  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Equalizer APO Device Selector.lnk" "$INSTDIR\DeviceSelector.exe"
+  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Equalizer APO.lnk" "$INSTDIR\EqualizerAPO.exe"
   CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
   !insertmacro MUI_STARTMENU_WRITE_END
   
@@ -225,10 +224,10 @@ Section "-Install"
   ;RegDLL doesn't work for 64 bit dlls
   ExecWait '"$SYSDIR\regsvr32.exe" /s "$INSTDIR\EqualizerAPO.dll"'
 
-  ExecWait '"$INSTDIR\DeviceSelector.exe" /i' $0
+  ExecWait '"$INSTDIR\EqualizerAPO.exe" /i' $0
   ExecWait 'schtasks.exe /Delete /TN "EqualizerAPOUpdateChecker" /F'
 
-  ;Hopefully, the renamed files can be deleted without reboot after the Device Selector has restarted the audio service
+  ;The control application has restarted the audio service, so files that were in use can usually be removed now.
   ${ForEachIn} deleteAfterRenameArray $R0 $R1
     Delete /REBOOTOK "$R1"
   ${Next}
@@ -252,7 +251,7 @@ Section "-un.Uninstall"
   ;Qt applications only work if working directory is set to application directory
   Push $OUTDIR
   SetOutPath $INSTDIR
-  ExecWait '"$INSTDIR\DeviceSelector.exe" /u'
+  ExecWait '"$INSTDIR\EqualizerAPO.exe" /u'
   ExecWait 'schtasks.exe /Delete /TN "EqualizerAPOUpdateChecker" /F'
   Pop $OUTDIR
   SetOutPath $OUTDIR
@@ -266,15 +265,16 @@ Section "-un.Uninstall"
   RMDir /r "$INSTDIR\qt"
   
   Delete "$INSTDIR\Qt6Widgets.dll"
-  Delete "$INSTDIR\Qt6Svg.dll"
   Delete "$INSTDIR\Qt6Gui.dll"
   Delete "$INSTDIR\Qt6Core.dll"
+  Delete "$INSTDIR\License.txt"
   Delete /REBOOTOK "$INSTDIR\sndfile.dll"
   Delete /REBOOTOK "$INSTDIR\libfftw3.dll"
   Delete "$INSTDIR\UpdateChecker.exe"
   Delete "$INSTDIR\VoicemeeterClient.exe"
   Delete "$INSTDIR\Benchmark.exe"
   Delete "$INSTDIR\DeviceSelector.exe"
+  Delete "$INSTDIR\EqualizerAPO.exe"
   Delete /REBOOTOK "$INSTDIR\EqualizerAPO.dll"
 
   Delete "$INSTDIR\Uninstall.exe"
@@ -283,6 +283,7 @@ Section "-un.Uninstall"
   RMDir /REBOOTOK "$INSTDIR"
 
   DeleteRegKey HKLM ${UNINST_REGPATH}
+  DeleteRegKey HKLM "${REGPATH}\Gains"
   DeleteRegKey /ifempty HKLM ${REGPATH}
 
 SectionEnd

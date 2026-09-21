@@ -1,14 +1,13 @@
 #-------------------------------------------------
 #
-# DeviceSelector qmake project for CI builds
-# This allows building DeviceSelector with qmake in CI
-# while keeping the .vcxproj for local Visual Studio development
+# EqualizerAPO control application qmake project for CI builds.
+# The .vcxproj remains available for local Visual Studio development.
 #
 #-------------------------------------------------
 
 QT += core gui widgets
 
-TARGET = DeviceSelector
+TARGET = EqualizerAPO
 TEMPLATE = app
 
 DEFINES += WIN32
@@ -20,35 +19,17 @@ PRECOMPILED_HEADER = stdafx.h
 SOURCES += \
 	main.cpp \
 	DeviceSelector.cpp \
-	DeviceTestDialog.cpp \
-	DeviceTestThread.cpp \
-	OpacityIconEngine.cpp \
-	ReceiveThread.cpp \
 	../helpers/ServiceHelper.cpp \
 	stdafx.cpp
 
 HEADERS += \
 	DeviceSelector.h \
-	DeviceTestDialog.h \
-	DeviceTestThread.h \
-	OpacityIconEngine.h \
-	ReceiveThread.h \
 	../helpers/ServiceHelper.h \
 	resource.h \
 	stdafx.h
 
-FORMS += \
-	DeviceSelector.ui \
-	DeviceTestDialog.ui
-
 RESOURCES += \
 	DeviceSelector.qrc
-
-TRANSLATIONS += \
-	translations/DeviceSelector_de.ts \
-	translations/DeviceSelector_en.ts \
-	translations/DeviceSelector_fr.ts \
-	translations/DeviceSelector_zh_CN.ts
 
 # Include parent directory for shared headers
 INCLUDEPATH += $$PWD/..

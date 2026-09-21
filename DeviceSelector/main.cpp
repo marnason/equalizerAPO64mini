@@ -20,10 +20,7 @@
 #include "stdafx.h"
 #include <DeviceAPOInfo.h>
 #include <helpers/RegistryHelper.h>
-#include <ObjBase.h>
 #include <QtWidgets/QApplication>
-#include <winsock2.h>
-#include "ReceiveThread.h"
 #include "DeviceSelector.h"
 
 int main(int argc, char* argv[])
@@ -38,40 +35,24 @@ int main(int argc, char* argv[])
 
 	QLocale::setDefault(QLocale::system());
 
-	QTranslator qtTranslator;
-	if (qtTranslator.load(QLocale(), ":/translations/qtbase", "_"))
-		app.installTranslator(&qtTranslator);
-
-	QTranslator deviceSelectorTranslator;
-	if (deviceSelectorTranslator.load(
-		QLocale(), ":/translations/DeviceSelector", "_"))
-		app.installTranslator(&deviceSelectorTranslator);
-
 	if (app.arguments().contains("/u"))
 	{
-		for (int index = 0; index <= 1; index++)
+		try
 		{
-			std::vector<std::shared_ptr<AbstractAPOInfo>> apoInfos =
-				DeviceAPOInfo::loadAllInfos(index == 1);
-
-			for (std::shared_ptr<AbstractAPOInfo>& apoInfo : apoInfos)
+			for (int index = 0; index <= 1; index++)
 			{
-				try
+				std::vector<std::shared_ptr<AbstractAPOInfo>> apoInfos = DeviceAPOInfo::loadAllInfos(index == 1);
+				for (std::shared_ptr<AbstractAPOInfo>& apoInfo : apoInfos)
 				{
 					if (apoInfo->isInstalled())
 						apoInfo->uninstall();
 				}
-				catch (RegistryException e)
-				{
-					QMessageBox::critical(nullptr,
-						DeviceSelector::tr(
-							"Error while accessing the registry"),
-						QString::fromStdWString(e.getMessage()));
-					result = -1;
-				}
 			}
 		}
-
+		catch (RegistryException&)
+		{
+			result = -1;
+		}
 	}
 	else
 	{

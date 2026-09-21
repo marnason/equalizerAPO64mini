@@ -9,7 +9,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EqualizerAPO", "EqualizerAP
 		{6758B50E-B9F0-4389-A61D-A842F0545E1B} = {6758B50E-B9F0-4389-A61D-A842F0545E1B}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DeviceSelector", "DeviceSelector\DeviceSelector.vcxproj", "{64223EB6-2BD3-4142-97A7-81B622899A67}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EqualizerAPO Control", "DeviceSelector\DeviceSelector.vcxproj", "{64223EB6-2BD3-4142-97A7-81B622899A67}"
 	ProjectSection(ProjectDependencies) = postProject
 		{6758B50E-B9F0-4389-A61D-A842F0545E1B} = {6758B50E-B9F0-4389-A61D-A842F0545E1B}
 	EndProjectSection

@@ -20,6 +20,7 @@
 #pragma once
 
 #include <string>
+#include <thread>
 #include <Unknwn.h>
 #include <audioenginebaseapo.h>
 #include <BaseAudioProcessingObject.h>
@@ -75,9 +76,17 @@ private:
 	PreampProcessor processor;
 	unsigned inputChannelCount;
 	bool allowSilentBufferModification;
+	std::wstring endpointGuid;
+	double initialGainDb;
+	bool appliesGain;
+	HANDLE gainWatcherStopEvent;
+	std::thread gainWatcherThread;
 
 	void resetChild();
-	void sendMessage(std::wstring& deviceTestPipeName, const std::wstring& deviceGuid, GUID apoGuid, const std::string& phase);
+	void stopGainWatcher();
+	void startGainWatcher();
+	void watchGainChanges();
+	double readEndpointGainDb() const;
 
 	IAudioProcessingObject* childAPO;
 	IAudioProcessingObjectRT* childRT;

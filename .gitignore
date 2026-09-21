@@ -45,6 +45,7 @@ dlldata.c
 # DNX
 project.lock.json
 artifacts/
+build-control*/
 
 *_i.c
 *_p.c
