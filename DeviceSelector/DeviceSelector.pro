@@ -13,7 +13,6 @@ TEMPLATE = app
 
 DEFINES += WIN32
 DEFINES += _UNICODE
-DEFINES += MUP_USE_WIDE_STRING
 QMAKE_CXXFLAGS_RELEASE += /O2
 
 PRECOMPILED_HEADER = stdafx.h
@@ -73,14 +72,6 @@ contains(QT_ARCH, arm64) {
 
 	} else {
 		QMAKE_LIBDIR += "../x64/Release"
-	}
-} else {
-	QMAKE_CXXFLAGS += /arch:AVX2
-	build_pass:CONFIG(debug, debug|release) {
-		QMAKE_LIBDIR += "../x32/Debug"
-
-	} else {
-		QMAKE_LIBDIR += "../x32/Release"
 	}
 }
 

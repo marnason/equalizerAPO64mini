@@ -67,11 +67,6 @@
         <translation>APO kann installiert werden</translation>
     </message>
     <message>
-        <location line="+4"/>
-        <source>Voicemeeter was uninstalled</source>
-        <translation>Voicemeeter wurde deinstalliert</translation>
-    </message>
-    <message>
         <location line="+2"/>
         <source>Default device</source>
         <translation>Standardgerät</translation>

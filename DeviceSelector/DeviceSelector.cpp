@@ -21,7 +21,6 @@
 #include <DeviceAPOInfo.h>
 #include <helpers/RegistryHelper.h>
 #include <helpers/ServiceHelper.h>
-#include <VoicemeeterAPOInfo.h>
 #include "DeviceTestDialog.h"
 #include "../version.h"
 #include "DeviceSelector.h"
@@ -110,15 +109,7 @@ void DeviceSelector::addDevices(std::vector<std::shared_ptr<AbstractAPOInfo>>& d
 		values.append(QString::fromStdWString(apoInfo->getConnectionName()));
 		values.append(QString::fromStdWString(apoInfo->getDeviceName()));
 
-		VoicemeeterAPOInfo* voicemeeterInfo = dynamic_cast<VoicemeeterAPOInfo*>(apoInfo.get());
-		bool checked = false;
-		if (apoInfo->isInstalled())
-		{
-			if (voicemeeterInfo != NULL && !voicemeeterInfo->isVoicemeeterInstalled())
-				checked = false;
-			else
-				checked = true;
-		}
+		bool checked = apoInfo->isInstalled();
 		QString state = getStateText(apoInfo, checked);
 
 		values.append(state);
@@ -188,8 +179,6 @@ void DeviceSelector::onDialogAccepted()
 			}
 		}
 	}
-
-	VoicemeeterAPOInfo::ensureVoicemeeterClientRunning();
 
 	finish(deviceUpdated);
 }
@@ -494,10 +483,7 @@ QString DeviceSelector::getStateText(const std::shared_ptr<AbstractAPOInfo>& apo
 	else
 		state = tr("APO can be installed");
 
-	VoicemeeterAPOInfo* voicemeeterInfo = dynamic_cast<VoicemeeterAPOInfo*>(apoInfo.get());
-	if (voicemeeterInfo != NULL && !voicemeeterInfo->isVoicemeeterInstalled())
-		state += ", " + tr("Voicemeeter was uninstalled");
-	else if (apoInfo->isDefaultDevice())
+	if (apoInfo->isDefaultDevice())
 		state += ", " + tr("Default device");
 
 	if (apoInfo->isDisabled())

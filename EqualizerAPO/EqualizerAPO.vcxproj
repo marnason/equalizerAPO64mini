@@ -104,67 +104,39 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <LIBSNDFILE_INCLUDE Condition="'$(LIBSNDFILE_INCLUDE)'==''">F:\Git\libsndfile\include</LIBSNDFILE_INCLUDE>
-    <FFTW_INCLUDE Condition="'$(FFTW_INCLUDE)'==''">F:\Git\amd-fftw\build\include</FFTW_INCLUDE>
-    <MUPARSERX_INCLUDE Condition="'$(MUPARSERX_INCLUDE)'==''">F:\Git\muparserx\parser</MUPARSERX_INCLUDE>
-    <TCLAP_ROOT Condition="'$(TCLAP_ROOT)'==''">F:\Git\tclap</TCLAP_ROOT>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LIBSNDFILE_LIB Condition="'$(LIBSNDFILE_LIB)'==''">F:\Git\libsndfile\build\Debug</LIBSNDFILE_LIB>
-    <FFTW_LIB Condition="'$(FFTW_LIB)'==''">F:\Git\amd-fftw\build\Debug</FFTW_LIB>
-    <MUPARSERX_LIB Condition="'$(MUPARSERX_LIB)'==''">F:\Git\muparserx\build\Debug</MUPARSERX_LIB>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LIBSNDFILE_LIB Condition="'$(LIBSNDFILE_LIB)'==''">F:\Git\libsndfile\build\Debug</LIBSNDFILE_LIB>
-    <FFTW_LIB Condition="'$(FFTW_LIB)'==''">F:\Git\amd-fftw\build\Debug</FFTW_LIB>
-    <MUPARSERX_LIB Condition="'$(MUPARSERX_LIB)'==''">F:\Git\muparserx\build\Debug</MUPARSERX_LIB>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
-    <LIBSNDFILE_LIB Condition="'$(LIBSNDFILE_LIB)'==''">F:\Git\libsndfile\build\Debug</LIBSNDFILE_LIB>
-    <FFTW_LIB Condition="'$(FFTW_LIB)'==''">F:\Git\amd-fftw\build\Debug</FFTW_LIB>
-    <MUPARSERX_LIB Condition="'$(MUPARSERX_LIB)'==''">F:\Git\muparserx\build\Debug</MUPARSERX_LIB>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LIBSNDFILE_LIB Condition="'$(LIBSNDFILE_LIB)'==''">F:\Git\libsndfile\build\Release</LIBSNDFILE_LIB>
-    <FFTW_LIB Condition="'$(FFTW_LIB)'==''">F:\Git\amd-fftw\build\Release</FFTW_LIB>
-    <MUPARSERX_LIB Condition="'$(MUPARSERX_LIB)'==''">F:\Git\muparserx\build\Release</MUPARSERX_LIB>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LIBSNDFILE_LIB Condition="'$(LIBSNDFILE_LIB)'==''">F:\Git\libsndfile\build\Release</LIBSNDFILE_LIB>
-    <FFTW_LIB Condition="'$(FFTW_LIB)'==''">F:\Git\amd-fftw\build\Release</FFTW_LIB>
-    <MUPARSERX_LIB Condition="'$(MUPARSERX_LIB)'==''">F:\Git\muparserx\build\Release</MUPARSERX_LIB>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
-    <LIBSNDFILE_LIB Condition="'$(LIBSNDFILE_LIB)'==''">F:\Git\libsndfile\build\Release</LIBSNDFILE_LIB>
-    <FFTW_LIB Condition="'$(FFTW_LIB)'==''">F:\Git\amd-fftw\build\Release</FFTW_LIB>
-    <MUPARSERX_LIB Condition="'$(MUPARSERX_LIB)'==''">F:\Git\muparserx\build\Release</MUPARSERX_LIB>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>$(SolutionDir);$(IncludePath)</IncludePath>
-    <LibraryPath>$(LIBSNDFILE_LIB);$(MUPARSERX_LIB);$(FFTW_LIB);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(SolutionDir);$(IncludePath)</IncludePath>
-    <LibraryPath>$(LIBSNDFILE_LIB);$(MUPARSERX_LIB);$(FFTW_LIB);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <IncludePath>$(SolutionDir);$(IncludePath)</IncludePath>
-    <LibraryPath>$(LIBSNDFILE_LIB);$(MUPARSERX_LIB);$(FFTW_LIB);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir);$(IncludePath)</IncludePath>
-    <LibraryPath>$(LIBSNDFILE_LIB);$(MUPARSERX_LIB);$(FFTW_LIB);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir);$(IncludePath)</IncludePath>
-    <LibraryPath>$(LIBSNDFILE_LIB);$(MUPARSERX_LIB);$(FFTW_LIB);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir);$(IncludePath)</IncludePath>
-    <LibraryPath>$(LIBSNDFILE_LIB);$(MUPARSERX_LIB);$(FFTW_LIB);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -187,7 +159,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>..\$(Platform)\$(Configuration)\Common.lib;Kernel32.lib;version.lib;oleaut32.lib;advapi32.lib;user32.lib;uuid.lib;AudioBaseProcessingObjectV140.lib;audiomediatypecrt.lib;authz.lib;crypt32.lib;audioeng.lib;dbghelp.lib;sndfile.lib;libfftw3.lib;muparserx.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\$(Platform)\$(Configuration)\Common.lib;Kernel32.lib;version.lib;oleaut32.lib;advapi32.lib;user32.lib;uuid.lib;AudioBaseProcessingObjectV140.lib;audiomediatypecrt.lib;authz.lib;crypt32.lib;audioeng.lib;dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>EqualizerAPO.def</ModuleDefinitionFile>
       <CETCompat>true</CETCompat>
     </Link>
@@ -200,7 +172,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;USE_WINDDK;_DEBUG;_WINDOWS;_WINDLL;_USRDLL;UNICODE;_UNICODE;EQUALIZERAPO_EXPORTS;MUP_USE_WIDE_STRING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;USE_WINDDK;_DEBUG;_WINDOWS;_WINDLL;_USRDLL;UNICODE;_UNICODE;EQUALIZERAPO_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FloatingPointModel>Precise</FloatingPointModel>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -216,7 +188,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>..\$(Platform)\$(Configuration)\Common.lib;Kernel32.lib;version.lib;oleaut32.lib;advapi32.lib;user32.lib;uuid.lib;AudioBaseProcessingObjectV140.lib;audiomediatypecrt.lib;authz.lib;crypt32.lib;audioeng.lib;dbghelp.lib;sndfile.lib;libfftw3.lib;muparserx.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\$(Platform)\$(Configuration)\Common.lib;Kernel32.lib;version.lib;oleaut32.lib;advapi32.lib;user32.lib;uuid.lib;AudioBaseProcessingObjectV140.lib;audiomediatypecrt.lib;authz.lib;crypt32.lib;audioeng.lib;dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>EqualizerAPO.def</ModuleDefinitionFile>
       <CETCompat>true</CETCompat>
     </Link>
@@ -229,7 +201,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;USE_WINDDK;NDEBUG;_WINDOWS;_USRDLL;UNICODE;_UNICODE;EQUALIZERAPO_EXPORTS;MUP_USE_WIDE_STRING</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;USE_WINDDK;NDEBUG;_WINDOWS;_USRDLL;UNICODE;_UNICODE;EQUALIZERAPO_EXPORTS</PreprocessorDefinitions>
       <FloatingPointModel>Precise</FloatingPointModel>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -241,7 +213,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>..\$(Platform)\$(Configuration)\Common.lib;Kernel32.lib;version.lib;oleaut32.lib;advapi32.lib;user32.lib;uuid.lib;AudioBaseProcessingObjectV140.lib;audiomediatypecrt.lib;authz.lib;crypt32.lib;audioeng.lib;dbghelp.lib;sndfile.lib;libfftw3.lib;muparserx.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\$(Platform)\$(Configuration)\Common.lib;Kernel32.lib;version.lib;oleaut32.lib;advapi32.lib;user32.lib;uuid.lib;AudioBaseProcessingObjectV140.lib;audiomediatypecrt.lib;authz.lib;crypt32.lib;audioeng.lib;dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>EqualizerAPO.def</ModuleDefinitionFile>
     </Link>
     <Midl>
@@ -255,7 +227,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;USE_WINDDK;NDEBUG;_WINDOWS;_USRDLL;UNICODE;_UNICODE;EQUALIZERAPO_EXPORTS;MUP_USE_WIDE_STRING</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;USE_WINDDK;NDEBUG;_WINDOWS;_USRDLL;UNICODE;_UNICODE;EQUALIZERAPO_EXPORTS</PreprocessorDefinitions>
       <FloatingPointModel>Precise</FloatingPointModel>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -279,7 +251,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>..\$(Platform)\$(Configuration)\Common.lib;Kernel32.lib;version.lib;oleaut32.lib;advapi32.lib;user32.lib;uuid.lib;AudioBaseProcessingObjectV140.lib;audiomediatypecrt.lib;authz.lib;crypt32.lib;audioeng.lib;dbghelp.lib;sndfile.lib;libfftw3.lib;muparserx.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\$(Platform)\$(Configuration)\Common.lib;Kernel32.lib;version.lib;oleaut32.lib;advapi32.lib;user32.lib;uuid.lib;AudioBaseProcessingObjectV140.lib;audiomediatypecrt.lib;authz.lib;crypt32.lib;audioeng.lib;dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>EqualizerAPO.def</ModuleDefinitionFile>
       <CETCompat>true</CETCompat>
     </Link>
@@ -291,7 +263,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;USE_WINDDK;NDEBUG;_WINDOWS;_USRDLL;UNICODE;_UNICODE;EQUALIZERAPO_EXPORTS;MUP_USE_WIDE_STRING</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;USE_WINDDK;NDEBUG;_WINDOWS;_USRDLL;UNICODE;_UNICODE;EQUALIZERAPO_EXPORTS</PreprocessorDefinitions>
       <FloatingPointModel>Precise</FloatingPointModel>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -315,7 +287,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>..\$(Platform)\$(Configuration)\Common.lib;Kernel32.lib;version.lib;oleaut32.lib;advapi32.lib;user32.lib;uuid.lib;AudioBaseProcessingObjectV140.lib;audiomediatypecrt.lib;authz.lib;crypt32.lib;audioeng.lib;dbghelp.lib;sndfile.lib;libfftw3.lib;muparserx.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\$(Platform)\$(Configuration)\Common.lib;Kernel32.lib;version.lib;oleaut32.lib;advapi32.lib;user32.lib;uuid.lib;AudioBaseProcessingObjectV140.lib;audiomediatypecrt.lib;authz.lib;crypt32.lib;audioeng.lib;dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>EqualizerAPO.def</ModuleDefinitionFile>
       <CETCompat>true</CETCompat>
     </Link>
@@ -349,12 +321,12 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>..\$(Platform)\$(Configuration)\Common.lib;Kernel32.lib;version.lib;oleaut32.lib;advapi32.lib;user32.lib;uuid.lib;AudioBaseProcessingObjectV140.lib;audiomediatypecrt.lib;authz.lib;crypt32.lib;audioeng.lib;dbghelp.lib;sndfile.lib;libfftw3.lib;muparserx.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\$(Platform)\$(Configuration)\Common.lib;Kernel32.lib;version.lib;oleaut32.lib;advapi32.lib;user32.lib;uuid.lib;AudioBaseProcessingObjectV140.lib;audiomediatypecrt.lib;authz.lib;crypt32.lib;audioeng.lib;dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>EqualizerAPO.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\helpers\MemoryHelper.h" />
+    <ClInclude Include="..\PreampProcessor.h" />
     <ClInclude Include="..\stdafx.h" />
     <ClInclude Include="..\version.h" />
     <ClInclude Include="ClassFactory.h" />
@@ -362,7 +334,7 @@
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\helpers\MemoryHelper.cpp" />
+    <ClCompile Include="..\PreampProcessor.cpp" />
     <ClCompile Include="..\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -385,12 +357,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ResourceCompile>
-    <ResourceCompile Include="EqualizerAPO.rc">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">true</ExcludedFromBuild>
     </ResourceCompile>
     <ResourceCompile Include="EqualizerAPO64.rc">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

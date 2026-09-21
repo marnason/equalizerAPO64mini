@@ -48,6 +48,7 @@ EqualizerAPO::EqualizerAPO(IUnknown* pUnkOuter)
 		this->pUnkOuter = reinterpret_cast<IUnknown*>(static_cast<INonDelegatingUnknown*>(this));
 
 	allowSilentBufferModification = false;
+	inputChannelCount = 0;
 
 	childAPO = NULL;
 	childRT = NULL;
@@ -96,6 +97,7 @@ HRESULT EqualizerAPO::GetLatency(HNSTIME* pTime)
 HRESULT EqualizerAPO::Initialize(UINT32 cbDataSize, BYTE* pbyData)
 {
 	LogHelper::reset();
+	allowSilentBufferModification = false;
 
 	TraceF(L"Initialize");
 
@@ -118,7 +120,6 @@ HRESULT EqualizerAPO::Initialize(UINT32 cbDataSize, BYTE* pbyData)
 	{
 		LogF(L"Could not convert apo guid to guid string");
 	}
-	engine.setPreMix((apoGuid == EQUALIZERAPO_PRE_MIX_GUID) != 0);
 
 	PROPVARIANT var;
 	PropVariantInit(&var);
@@ -152,8 +153,6 @@ HRESULT EqualizerAPO::Initialize(UINT32 cbDataSize, BYTE* pbyData)
 		DeviceAPOInfo apoInfo;
 		if (apoInfo.load(deviceGuid))
 		{
-			engine.setDeviceInfo(apoInfo.isInput(), apoInfo.getCurrentInstallState().installPostMix, apoInfo.getDeviceName(), apoInfo.getConnectionName(), apoInfo.getDeviceGuid(), apoInfo.getDeviceString());
-
 			if (apoGuid == EQUALIZERAPO_PRE_MIX_GUID)
 				childApoGuid = apoInfo.getPreMixChildGuid();
 			else
@@ -352,31 +351,14 @@ HRESULT EqualizerAPO::LockForProcess(UINT32 u32NumInputConnections,
 		TraceF(L"LockForProcess successful");
 	}
 
-	unsigned maxFrameCount = maxInputFrameCount;
-	if (maxFrameCount == 0)
-		maxFrameCount = maxOutputFrameCount;
-
 	unsigned realChannelCount;
 	if (childCfg != NULL)
 		realChannelCount = outFormat.dwSamplesPerFrame;
 	else
 		realChannelCount = inFormat.dwSamplesPerFrame;
 
-	unsigned channelMask;
-	if (engine.isCapture())
-	{
-		channelMask = inFormat.dwChannelMask;
-		if (channelMask == 0 && inFormat.dwSamplesPerFrame == outFormat.dwSamplesPerFrame)
-			channelMask = outFormat.dwChannelMask;
-	}
-	else
-	{
-		channelMask = outFormat.dwChannelMask;
-		if (channelMask == 0 && inFormat.dwSamplesPerFrame == outFormat.dwSamplesPerFrame)
-			channelMask = inFormat.dwChannelMask;
-	}
-
-	engine.initialize(outFormat.fFramesPerSecond, inFormat.dwSamplesPerFrame, realChannelCount, outFormat.dwSamplesPerFrame, channelMask, maxFrameCount);
+	inputChannelCount = inFormat.dwSamplesPerFrame;
+	processor.initialize(realChannelCount, outFormat.dwSamplesPerFrame);
 
 	return hr;
 }
@@ -457,16 +439,16 @@ void EqualizerAPO::APOProcess(UINT32 u32NumInputConnections,
 		float* outputFrames = reinterpret_cast<float*>(ppOutputConnections[0]->pBuffer);
 
 		if (ppInputConnections[0]->u32BufferFlags == BUFFER_SILENT)
-			memset(inputFrames, 0, ppInputConnections[0]->u32ValidFrameCount * engine.getInputChannelCount() * sizeof(float));
+			memset(inputFrames, 0, ppInputConnections[0]->u32ValidFrameCount * inputChannelCount * sizeof(float));
 
 		if (childRT)
 		{
 			childRT->APOProcess(u32NumInputConnections, ppInputConnections, u32NumOutputConnections, ppOutputConnections);
 
-			engine.process(outputFrames, outputFrames, ppInputConnections[0]->u32ValidFrameCount);
+			processor.process(outputFrames, outputFrames, ppInputConnections[0]->u32ValidFrameCount);
 		}
 		else
-			engine.process(outputFrames, inputFrames, ppInputConnections[0]->u32ValidFrameCount);
+			processor.process(outputFrames, inputFrames, ppInputConnections[0]->u32ValidFrameCount);
 
 		ppOutputConnections[0]->u32ValidFrameCount = ppInputConnections[0]->u32ValidFrameCount;
 
@@ -474,7 +456,7 @@ void EqualizerAPO::APOProcess(UINT32 u32NumInputConnections,
 		{
 			if (allowSilentBufferModification)
 			{
-				unsigned outputFrameCount = ppOutputConnections[0]->u32ValidFrameCount * engine.getOutputChannelCount();
+				unsigned outputFrameCount = ppOutputConnections[0]->u32ValidFrameCount * processor.getOutputChannelCount();
 				boolean silent = true;
 				for (unsigned i = 0; i < outputFrameCount; i++)
 				{
@@ -489,7 +471,7 @@ void EqualizerAPO::APOProcess(UINT32 u32NumInputConnections,
 			}
 			else
 			{
-				memset(outputFrames, 0, ppOutputConnections[0]->u32ValidFrameCount * engine.getOutputChannelCount() * sizeof(float));
+				memset(outputFrames, 0, ppOutputConnections[0]->u32ValidFrameCount * processor.getOutputChannelCount() * sizeof(float));
 				ppOutputConnections[0]->u32BufferFlags = BUFFER_SILENT;
 			}
 		}

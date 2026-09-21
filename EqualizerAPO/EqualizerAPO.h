@@ -23,7 +23,7 @@
 #include <Unknwn.h>
 #include <audioenginebaseapo.h>
 #include <BaseAudioProcessingObject.h>
-#include "../FilterEngine.h"
+#include "../PreampProcessor.h"
 
 class INonDelegatingUnknown
 {
@@ -72,7 +72,8 @@ public:
 private:
 	long refCount;
 	IUnknown* pUnkOuter;
-	FilterEngine engine;
+	PreampProcessor processor;
+	unsigned inputChannelCount;
 	bool allowSilentBufferModification;
 
 	void resetChild();

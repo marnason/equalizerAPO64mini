@@ -68,11 +68,6 @@
         <translation>可以安装 APO</translation>
     </message>
     <message>
-        <location line="+4"/>
-        <source>Voicemeeter was uninstalled</source>
-        <translation>Voicemeeter 已卸载</translation>
-    </message>
-    <message>
         <location line="+2"/>
         <source>Default device</source>
         <translation>默认设备</translation>

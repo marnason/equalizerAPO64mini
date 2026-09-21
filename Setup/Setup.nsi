@@ -45,7 +45,6 @@ SetCompressor /SOLID lzma
 ;Interface Settings
 
   !define MUI_ABORTWARNING
-  !define MUI_COMPONENTSPAGE_NODESC
   !define MUI_WELCOMEPAGE_TITLE_3LINES
 
 ;--------------------------------
@@ -61,13 +60,11 @@ SetCompressor /SOLID lzma
   !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start Menu Folder"
   
   !insertmacro MUI_PAGE_STARTMENU Application $StartMenuFolder
-  !insertmacro MUI_PAGE_COMPONENTS
   !insertmacro MUI_PAGE_INSTFILES
   !insertmacro MUI_PAGE_FINISH
 
   !insertmacro MUI_UNPAGE_WELCOME
   !insertmacro MUI_UNPAGE_CONFIRM
-  !insertmacro MUI_UNPAGE_COMPONENTS
   !insertmacro MUI_UNPAGE_INSTFILES
   !insertmacro MUI_UNPAGE_FINISH
 
@@ -149,12 +146,6 @@ FunctionEnd
 
 ;--------------------------------
 ;Installer Sections
-LangString SecCheckForUpdates ${LANG_ENGLISH} "Check for updates automatically"
-LangString SecCheckForUpdates ${LANG_GERMAN} "Automatisch auf Updates pr�fen"
-
-Section $(SecCheckForUpdates) SecCheckForUpdates
-SectionEnd
-
 Section "-Install"
   SetOutPath "$INSTDIR"
 
@@ -166,9 +157,10 @@ Section "-Install"
   Delete "$INSTDIR\Qt5Core.dll"
   Delete "$INSTDIR\Qt5Gui.dll"
   Delete "$INSTDIR\Qt5Widgets.dll"
-  Delete "$INSTDIR\qt\imageformats\qgif.dll"
-  Delete "$INSTDIR\qt\imageformats\qjpeg.dll"
-  Delete "$INSTDIR\qt\styles\qwindowsvistastyle.dll"
+  Delete "$INSTDIR\Qt6Network.dll"
+  Delete "$INSTDIR\Configuration reference (online).url"
+  Delete "$INSTDIR\Configuration tutorial (online).url"
+  RMDir /r "$INSTDIR\qt"
   
   ;Rename before delete as these files may be in use
   !insertmacro RenameAndDelete "$INSTDIR\EqualizerAPO.dll"
@@ -183,68 +175,32 @@ Section "-Install"
   !insertmacro RenameAndDelete "$INSTDIR\msvcp140.dll"
   !insertmacro RenameAndDelete "$INSTDIR\msvcp140_1.dll"
   !insertmacro RenameAndDelete "$INSTDIR\msvcp140_2.dll"
+  !insertmacro RenameAndDelete "$INSTDIR\Editor.exe"
+  !insertmacro RenameAndDelete "$INSTDIR\Benchmark.exe"
+  !insertmacro RenameAndDelete "$INSTDIR\UpdateChecker.exe"
   !insertmacro RenameAndDelete "$INSTDIR\VoicemeeterClient.exe"
   !insertmacro RenameAndDelete "$INSTDIR\vcruntime140.dll"
   !insertmacro RenameAndDelete "$INSTDIR\vcruntime140_1.dll"
   
   File "${BINPATH}\EqualizerAPO.dll"
   File "${BINPATH}\DeviceSelector.exe"
-  File "${BINPATH}\Benchmark.exe"
-  File "${BINPATH}\VoicemeeterClient.exe"
-  File "${BINPATH}\UpdateChecker.exe"
-  
-  File "${BINPATH_EDITOR}\Editor.exe"
-  
-  File "${LIBPATH}\libfftw3.dll"
-  File "${LIBPATH}\sndfile.dll"
   File "${LIBPATH}\Qt6Core.dll"
   File "${LIBPATH}\Qt6Gui.dll"
-  File "${LIBPATH}\Qt6Network.dll"
   File "${LIBPATH}\Qt6Svg.dll"
   File "${LIBPATH}\Qt6Widgets.dll"
   
   CreateDirectory "$INSTDIR\qt"
   CreateDirectory "$INSTDIR\qt\iconengines"
-  CreateDirectory "$INSTDIR\qt\imageformats"
   CreateDirectory "$INSTDIR\qt\platforms"
   CreateDirectory "$INSTDIR\qt\styles"
-  CreateDirectory "$INSTDIR\qt\tls"
   
-  File /oname=qt\iconengines\qsvgicon.dll "${LIBPATH}\qt\iconengines\qsvgicon.dll"
-  File /oname=qt\imageformats\qico.dll "${LIBPATH}\qt\imageformats\qico.dll"
-  File /oname=qt\imageformats\qsvg.dll "${LIBPATH}\qt\imageformats\qsvg.dll"
-  File /oname=qt\platforms\qwindows.dll "${LIBPATH}\qt\platforms\qwindows.dll"
-  File /oname=qt\styles\qmodernwindowsstyle.dll "${LIBPATH}\qt\styles\qmodernwindowsstyle.dll"
-  File /oname=qt\tls\qschannelbackend.dll "${LIBPATH}\qt\tls\qschannelbackend.dll"
-  
-  File "Configuration tutorial (online).url"
-  File "Configuration reference (online).url"
-  
-  CreateDirectory "$INSTDIR\config"
-  CreateDirectory "$INSTDIR\VSTPlugins"
-  
-  SetOverwrite off
-  File /oname=config\config.txt "config\config.txt"
-  File /oname=config\example.txt "config\example.txt"
-  File /oname=config\demo.txt "config\demo.txt"
-  File /oname=config\multichannel.txt "config\multichannel.txt"
-  File /oname=config\iir_lowpass.txt "config\iir_lowpass.txt"
-  File /oname=config\selective_delay.txt "config\selective_delay.txt"
-  SetOverwrite on
-
-  ;Grant write access to the config directory for all users
-  AccessControl::GrantOnFile "$INSTDIR\config" "(S-1-5-32-545)" "FullAccess"
+  File /oname=qt\iconengines\qsvgicon.dll "${LIBPATH}\iconengines\qsvgicon.dll"
+  File /oname=qt\platforms\qwindows.dll "${LIBPATH}\platforms\qwindows.dll"
+  File /oname=qt\styles\qmodernwindowsstyle.dll "${LIBPATH}\styles\qmodernwindowsstyle.dll"
 
   ReadRegStr $OLDINSTDIR HKLM ${REGPATH} "InstallPath"
   WriteRegStr HKLM ${REGPATH} "InstallPath" "$INSTDIR"
   
-  ;Write ConfigPath if non-existing or if InstallPath has changed
-  ReadRegStr $0 HKLM ${REGPATH} "ConfigPath"
-  ${If} $0 == ""
-  ${OrIf} $INSTDIR != $OLDINSTDIR
-	WriteRegStr HKLM ${REGPATH} "ConfigPath" "$INSTDIR\config"
-  ${EndIf}
-	
   ReadRegStr $0 HKLM ${REGPATH} "EnableTrace"
   ${If} $0 == ""
 	WriteRegStr HKLM ${REGPATH} "EnableTrace" "false"
@@ -255,11 +211,7 @@ Section "-Install"
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
   ;Create shortcuts
   CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
-  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Equalizer APO Configuration Editor.lnk" "$INSTDIR\Editor.exe"
-  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Configuration tutorial (online).lnk" "$INSTDIR\Configuration tutorial (online).url"
-  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Configuration reference (online).lnk" "$INSTDIR\Configuration reference (online).url"
   CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Equalizer APO Device Selector.lnk" "$INSTDIR\DeviceSelector.exe"
-  CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Benchmark.lnk" "$INSTDIR\Benchmark.exe"
   CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
   !insertmacro MUI_STARTMENU_WRITE_END
   
@@ -274,12 +226,7 @@ Section "-Install"
   ExecWait '"$SYSDIR\regsvr32.exe" /s "$INSTDIR\EqualizerAPO.dll"'
 
   ExecWait '"$INSTDIR\DeviceSelector.exe" /i' $0
-  
-  ${If} ${SectionIsSelected} ${SecCheckForUpdates}
-    ExecWait '"$INSTDIR\UpdateChecker.exe" -i'
-  ${Else}
-    ExecWait '"$INSTDIR\UpdateChecker.exe" -u'
-  ${EndIf}
+  ExecWait 'schtasks.exe /Delete /TN "EqualizerAPOUpdateChecker" /F'
 
   ;Hopefully, the renamed files can be deleted without reboot after the Device Selector has restarted the audio service
   ${ForEachIn} deleteAfterRenameArray $R0 $R1
@@ -297,17 +244,6 @@ SectionEnd
 ;--------------------------------
 ;Uninstaller Sections
 
-LangString SecRemoveName ${LANG_ENGLISH} "Remove configurations and registry backups"
-LangString SecRemoveName ${LANG_GERMAN} "Konfigurationen und Registrierungsbackups entfernen"
-
-Section /o un.$(SecRemoveName)
-  
-  Delete "$INSTDIR\*.reg"
-  RMDir /REBOOTOK /r "$INSTDIR\config"
-  DeleteRegKey HKCU ${REGPATH}
-  
-SectionEnd
-
 Section "-un.Uninstall"
   !if ${LIBPATH} != "lib32"
 	SetRegView 64
@@ -316,8 +252,8 @@ Section "-un.Uninstall"
   ;Qt applications only work if working directory is set to application directory
   Push $OUTDIR
   SetOutPath $INSTDIR
-  ExecWait '"$INSTDIR\UpdateChecker.exe" -u'
   ExecWait '"$INSTDIR\DeviceSelector.exe" /u'
+  ExecWait 'schtasks.exe /Delete /TN "EqualizerAPOUpdateChecker" /F'
   Pop $OUTDIR
   SetOutPath $OUTDIR
   
@@ -327,22 +263,14 @@ Section "-un.Uninstall"
   !insertmacro MUI_STARTMENU_GETFOLDER Application $StartMenuFolder
   RMDir /r "$SMPROGRAMS\$StartMenuFolder"
   
-  RMDir "$INSTDIR\VSTPlugins"
-  
-  Delete "$INSTDIR\Configuration reference (online).url"
-  Delete "$INSTDIR\Configuration tutorial (online).url"
-  
   RMDir /r "$INSTDIR\qt"
   
   Delete "$INSTDIR\Qt6Widgets.dll"
   Delete "$INSTDIR\Qt6Svg.dll"
-  Delete "$INSTDIR\Qt6Network.dll"
   Delete "$INSTDIR\Qt6Gui.dll"
   Delete "$INSTDIR\Qt6Core.dll"
   Delete /REBOOTOK "$INSTDIR\sndfile.dll"
   Delete /REBOOTOK "$INSTDIR\libfftw3.dll"
-  Delete "$INSTDIR\Editor.exe"
-  
   Delete "$INSTDIR\UpdateChecker.exe"
   Delete "$INSTDIR\VoicemeeterClient.exe"
   Delete "$INSTDIR\Benchmark.exe"

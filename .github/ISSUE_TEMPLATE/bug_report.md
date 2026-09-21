@@ -24,4 +24,4 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Additional context**
-Add any other context about the problem here, any particular files or the config.txt that this issue occurred with, etc.
+Add any other context about the problem, including the affected endpoint and whether it is a playback or capture device.

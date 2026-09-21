@@ -22,7 +22,6 @@
 #include <helpers/RegistryHelper.h>
 #include <ObjBase.h>
 #include <QtWidgets/QApplication>
-#include <VoicemeeterAPOInfo.h>
 #include <winsock2.h>
 #include "ReceiveThread.h"
 #include "DeviceSelector.h"
@@ -73,7 +72,6 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		VoicemeeterAPOInfo::ensureVoicemeeterClientRunning();
 	}
 	else
 	{

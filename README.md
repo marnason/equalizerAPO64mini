@@ -1,44 +1,28 @@
-# EqualizerAPO (double precision edition)
+# EqualizerAPO64mini
 
-This repo contains a modified 1.4.2 port of [EqualizerAPO](https://sourceforge.net/p/equalizerapo/) - a system wide equalizer for Windows, enhanced with double precision (64 bit) audio processing, expanded AVX support and a fully automated build pipeline using Visual Studio 2022.
+EqualizerAPO64mini is a Windows Audio Processing Object derived from Equalizer APO. The repository is being reduced to a small utility that applies one independent preamp gain to each playback or capture endpoint.
 
-This effort was inspired and founded on a previous conversion of EqualizerAPO to double precision processing (https://github.com/chebum/equalizer-apo-64), updated and later rebuilt here with the latest EAPO release, and further enhanced with expanded AVX usage for optimal performancee.
+This is an intermediate simplification milestone. The APO currently runs at a neutral `0 dB` gain and intentionally has no gain configuration application or configuration file. `DeviceSelector` is retained temporarily to install and remove the APO on Windows audio endpoints.
 
-Double procession processing (64 bit internal pipeline) in EqualizerAPO maintains precision and quality when applying multiple overlapping effects. Examples include convolution, complex parametric EQ setups or GraphicEQ's. Support for AVX256 also ensures similar performance to the original 32 bit pipeline, with additional optional support for AVX512 to further enhance performance. ARM is also supported via a native start-to-end build of all dependencies and Qt projects.
+## Current behavior
 
-## Features
-- **Double precision processing filter engine** (32bit floats -> 64bit doubles) for improved fidelity with more complex setups
-- Support for AVX2 & AVX-512 in both EAPO and all dependencies, including FFTW3's AVX2/AVX-512 optimizations.
-- Expanded usage of AVX instructions to reduce processing latency
-- Uses shared VC++ DLLs for improved compatibility
-- Compiled with VS 2022 for all components, using the latest Windows SDK and additional compiler optimizations.
-- Built with AOCL-FFTW 3.3.10 (optimized for AMD/modern CPUs)
-- Updated Qt 6.10 for GUI components with native ARM support.
-- Uses fp-precise instead of fp-fast for floating point math.
-- Automated build pipeline for all components and the installer via Github Actions
-- Fully native start-to-end ARM64 automated build.
+- Preserves Equalizer APO's endpoint registration, installation, removal, child-APO compatibility, diagnostics, and real-time integration.
+- Uses a bit-transparent bypass when the gain is `0 dB`.
+- Contains the preamp processor and the existing `10^(dB/20)` gain conversion needed by the future configuration application.
+- Does not provide EQ, convolution, VST hosting, routing, delays, channel selection, loudness correction, expressions, includes, stages, analysis, benchmarking, or update checking.
+- Does not read or modify legacy Equalizer APO configuration files.
 
-## Installation
-Download the latest version from the [Releases page](https://github.com/TheFireKahuna/equalizerAPO64/releases).
+## Supported builds
 
-## Building EqualizerAPO
-This project uses a fully automated Github Actions CI pipeline for both the main project and all dependencies.
+The GitHub Actions workflow builds and packages:
 
-The following forked repositories are used for a stable pipeline, each including a CI pipline and a packaged release using the latest Github Actions build:
-- [AOCL-FFTW 5.1 (FFTW 3.3.10)](https://github.com/thefirekahuna/amd-fftw)
-- [muparserx 4.0.12](https://github.com/thefirekahuna/muparserx)
-- [libsndfile 1.2.2](https://github.com/thefirekahuna/libsndfile)
-- [tclap 1.2.5](https://github.com/thefirekahuna/tclap)
+- x64 AVX2
+- x64 AVX-512
+- x64 AVX10.1
+- ARM64
 
-Local builds are configured via shared environment variables, directly configurable in the relevant .vcxproj and .pro files as follows:
-```
-  <PropertyGroup>
-    <LIBSNDFILE_INCLUDE Condition="'$(LIBSNDFILE_INCLUDE)'==''">F:\Git\libsndfile\include</LIBSNDFILE_INCLUDE>
-    <LIBSNDFILE_LIB Condition="'$(LIBSNDFILE_LIB)'==''">F:\Git\libsndfile\out\build\x64-Release</LIBSNDFILE_LIB>
-    <FFTW_INCLUDE Condition="'$(FFTW_INCLUDE)'==''">F:\Git\amd-fftw\build\include</FFTW_INCLUDE>
-    <FFTW_LIB Condition="'$(FFTW_LIB)'==''">F:\Git\amd-fftw\out\build\x64-Release</FFTW_LIB>
-    <MUPARSERX_INCLUDE Condition="'$(MUPARSERX_INCLUDE)'==''">F:\Git\muparserx\parser</MUPARSERX_INCLUDE>
-    <MUPARSERX_LIB Condition="'$(MUPARSERX_LIB)'==''">F:\Git\muparserx\lib64</MUPARSERX_LIB>
-    <TCLAP_ROOT Condition="'$(TCLAP_ROOT)'==''">F:\Git\tclap</TCLAP_ROOT>
-  </PropertyGroup>
-```
+The supported projects are `Common`, `EqualizerAPO`, and `DeviceSelector`. Visual Studio 2022, the Windows SDK, Qt 6.10.1, and NSIS are used by the build and packaging pipeline. For local installer builds, `build.bat` accepts `QTX64_BIN` and `QTARM64_BIN` pointing to the matching Qt `bin` directories.
+
+## License
+
+This project is derived from [Equalizer APO](https://sourceforge.net/projects/equalizerapo/) by Jonas Thedering. Its earlier double-precision work was inspired by [equalizer-apo-64](https://github.com/chebum/equalizer-apo-64). Existing copyright notices and the GPL license are retained; see [License.txt](License.txt).

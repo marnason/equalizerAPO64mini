@@ -25,7 +25,6 @@
 #include <comdef.h>
 
 #include "DeviceAPOInfo.h"
-#include "VoicemeeterAPOInfo.h"
 
 #include "helpers/StringHelper.h"
 #include "helpers/RegistryHelper.h"
@@ -94,9 +93,6 @@ vector<shared_ptr<AbstractAPOInfo>> DeviceAPOInfo::loadAllInfos(bool input)
 			result.push_back(move(info));
 		}
 	}
-
-	if (!input)
-		VoicemeeterAPOInfo::prependInfos(result);
 
 	return result;
 }
