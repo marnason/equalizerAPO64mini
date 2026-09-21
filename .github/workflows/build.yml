@@ -68,7 +68,7 @@ jobs:
           dir: '${{ github.workspace }}\Qt'
           install-deps: 'true'
           set-env: 'true'
-          archives: 'qtbase qtsvg'
+          archives: 'qtbase qtsvg qttools'
           cache: 'true'
 
       - name: Build APO libraries
@@ -100,6 +100,7 @@ jobs:
           $buildDir = "build-DeviceSelector-${{ matrix.platform }}"
           New-Item -ItemType Directory -Force -Path $buildDir | Out-Null
           Set-Location $buildDir
+          lrelease ..\DeviceSelector\DeviceSelector.pro
           if ("${{ matrix.platform }}" -eq "x64") {
             $flag = switch ("${{ matrix.simd_variant }}") {
               "avx512" { "/arch:AVX512" }
