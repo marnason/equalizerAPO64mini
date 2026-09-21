@@ -55,7 +55,7 @@ void PreampProcessor::process(float* output, const float* input, unsigned frameC
 		return;
 	}
 
-	const unsigned copiedChannelCount = std::min(inputChannelCount, outputChannelCount);
+	const unsigned copiedChannelCount = (std::min)(inputChannelCount, outputChannelCount);
 	auto processFrame = [&](unsigned frame)
 	{
 		const float* inputFrame = input + frame * inputChannelCount;
