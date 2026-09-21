@@ -20,21 +20,21 @@ jobs:
       matrix:
         include:
           - name: windows-x64-avx2
-            os: windows-2025
+            os: windows-2022
             platform: x64
             simd_variant: avx2
             instruction_set: AdvancedVectorExtensions2
             qt_arch: win64_msvc2022_64
             dev_arch: x64
           - name: windows-x64-avx512
-            os: windows-2025
+            os: windows-2022
             platform: x64
             simd_variant: avx512
             instruction_set: AdvancedVectorExtensions512
             qt_arch: win64_msvc2022_64
             dev_arch: x64
           - name: windows-x64-avx10_1
-            os: windows-2025
+            os: windows-2022
             platform: x64
             simd_variant: avx10_1
             instruction_set: AdvancedVectorExtensions101
@@ -68,8 +68,8 @@ jobs:
           dir: '${{ github.workspace }}\Qt'
           install-deps: 'true'
           set-env: 'true'
-          setup-python: 'false'
-          extra: '--external 7z'
+          archives: 'qtbase qtsvg'
+          cache: 'true'
 
       - name: Build APO libraries
         shell: pwsh
@@ -100,7 +100,6 @@ jobs:
           $buildDir = "build-DeviceSelector-${{ matrix.platform }}"
           New-Item -ItemType Directory -Force -Path $buildDir | Out-Null
           Set-Location $buildDir
-          lrelease ..\DeviceSelector\DeviceSelector.pro
           if ("${{ matrix.platform }}" -eq "x64") {
             $flag = switch ("${{ matrix.simd_variant }}") {
               "avx512" { "/arch:AVX512" }
