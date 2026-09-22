@@ -38,18 +38,14 @@ class RegistryHelper
 public:
 	static std::wstring readValue(std::wstring key, std::wstring valuename);
 	static unsigned long readDWORDValue(std::wstring key, std::wstring valuename);
-	static std::vector<std::wstring> readMultiValue(std::wstring key, std::wstring valuename);
-	static std::vector<unsigned char> readBinaryValue(std::wstring key, std::wstring valuename);
 	static void writeValue(std::wstring key, std::wstring valuename, std::wstring value);
 	static void writeDWORDValue(std::wstring key, std::wstring valuename, unsigned long value);
 	static void writeMultiValue(std::wstring key, std::wstring valuename, std::wstring value);
-	static void writeMultiValue(std::wstring key, std::wstring valuename, std::vector<std::wstring> values);
 	static void deleteValue(std::wstring key, std::wstring valuename);
 	static void createKey(std::wstring key);
 	static void deleteKey(std::wstring key);
 	static void makeWritable(std::wstring key);
 	static void takeOwnership(std::wstring key);
-	static ACCESS_MASK getFileAccessForUser(std::wstring path, unsigned long rid);
 	static std::vector<std::wstring> enumSubKeys(std::wstring key);
 	static bool keyExists(std::wstring key);
 	static bool valueExists(std::wstring key, std::wstring valuename);

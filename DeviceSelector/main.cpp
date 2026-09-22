@@ -41,8 +41,8 @@ int main(int argc, char* argv[])
 		{
 			for (int index = 0; index <= 1; index++)
 			{
-				std::vector<std::shared_ptr<AbstractAPOInfo>> apoInfos = DeviceAPOInfo::loadAllInfos(index == 1);
-				for (std::shared_ptr<AbstractAPOInfo>& apoInfo : apoInfos)
+				std::vector<std::shared_ptr<DeviceAPOInfo>> apoInfos = DeviceAPOInfo::loadAllInfos(index == 1);
+				for (std::shared_ptr<DeviceAPOInfo>& apoInfo : apoInfos)
 				{
 					if (apoInfo->isInstalled())
 						apoInfo->uninstall();

@@ -25,6 +25,7 @@ SOURCES += \
 HEADERS += \
 	DeviceSelector.h \
 	../helpers/ServiceHelper.h \
+	../helpers/ScopeGuard.h \
 	resource.h \
 	stdafx.h
 
@@ -35,7 +36,7 @@ RESOURCES += \
 INCLUDEPATH += $$PWD/..
 
 # Link against Common library and Windows libraries
-LIBS += Kernel32.lib version.lib Shlwapi.lib authz.lib user32.lib advapi32.lib crypt32.lib
+LIBS += Kernel32.lib version.lib Shlwapi.lib user32.lib advapi32.lib
 
 # Include Common.lib
 LIBS += Common.lib

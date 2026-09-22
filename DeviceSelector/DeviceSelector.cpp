@@ -83,7 +83,7 @@ DeviceSelector::DeviceSelector(QWidget* parent)
 			tr("Required Windows audio registration was repaired. Apply an installation change or restart Windows before using the affected endpoint."));
 }
 
-void DeviceSelector::addDevices(const std::vector<std::shared_ptr<AbstractAPOInfo>>& devices, QTreeWidgetItem* parentNode)
+void DeviceSelector::addDevices(const std::vector<std::shared_ptr<DeviceAPOInfo>>& devices, QTreeWidgetItem* parentNode)
 {
 	for (const auto& info : devices)
 	{
@@ -128,7 +128,7 @@ void DeviceSelector::onDeviceToggled(QTreeWidgetItem* item, int column)
 {
 	if (populating || column != 0 || item->childCount() != 0)
 		return;
-	const auto info = item->data(0, INFO_ROLE).value<std::shared_ptr<AbstractAPOInfo>>();
+	const auto info = item->data(0, INFO_ROLE).value<std::shared_ptr<DeviceAPOInfo>>();
 	item->setText(2, getStateText(info, item->checkState(0) == Qt::Checked));
 	updateApplyButton();
 }
@@ -142,7 +142,7 @@ void DeviceSelector::applyInstallationChanges()
 		for (int index = 0; index < group->childCount(); ++index)
 		{
 			QTreeWidgetItem* item = group->child(index);
-			const auto info = item->data(0, INFO_ROLE).value<std::shared_ptr<AbstractAPOInfo>>();
+			const auto info = item->data(0, INFO_ROLE).value<std::shared_ptr<DeviceAPOInfo>>();
 			const bool checked = item->checkState(0) == Qt::Checked;
 			try
 			{
@@ -150,7 +150,7 @@ void DeviceSelector::applyInstallationChanges()
 					info->install();
 				else if (!checked && info->isInstalled())
 					info->uninstall();
-				else if (checked && (info->canBeUpgraded() || info->hasChanges() || info->isEnhancementsDisabled()))
+				else if (checked && (info->canBeUpgraded() || info->isEnhancementsDisabled()))
 					info->reinstall();
 				else
 					continue;
@@ -189,10 +189,10 @@ bool DeviceSelector::hasInstallationChanges() const
 		for (int index = 0; index < group->childCount(); ++index)
 		{
 			QTreeWidgetItem* item = group->child(index);
-			const auto info = item->data(0, INFO_ROLE).value<std::shared_ptr<AbstractAPOInfo>>();
+			const auto info = item->data(0, INFO_ROLE).value<std::shared_ptr<DeviceAPOInfo>>();
 			const bool checked = item->checkState(0) == Qt::Checked;
 			if (checked != info->isInstalled()
-				|| checked && (info->canBeUpgraded() || info->hasChanges() || info->isEnhancementsDisabled()))
+				|| checked && (info->canBeUpgraded() || info->isEnhancementsDisabled()))
 				return true;
 		}
 	}
@@ -204,14 +204,14 @@ void DeviceSelector::updateApplyButton()
 	applyButton->setEnabled(hasInstallationChanges());
 }
 
-QString DeviceSelector::getStateText(const std::shared_ptr<AbstractAPOInfo>& info, bool checked) const
+QString DeviceSelector::getStateText(const std::shared_ptr<DeviceAPOInfo>& info, bool checked) const
 {
 	QString state;
 	if (checked && !info->isInstalled())
 		state = tr("Will be installed");
 	else if (!checked && info->isInstalled())
 		state = tr("Will be removed");
-	else if (info->isInstalled() && (info->canBeUpgraded() || info->hasChanges()))
+	else if (info->isInstalled() && info->canBeUpgraded())
 		state = tr("Update available");
 	else if (info->isInstalled() && info->isEnhancementsDisabled())
 		state = tr("Enhancements disabled");

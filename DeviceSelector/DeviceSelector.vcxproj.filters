@@ -4,6 +4,7 @@
     <QtRcc Include="DeviceSelector.qrc" />
     <QtMoc Include="DeviceSelector.h" />
     <ClInclude Include="..\helpers\ServiceHelper.h" />
+    <ClInclude Include="..\helpers\ScopeGuard.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClCompile Include="..\helpers\ServiceHelper.cpp" />

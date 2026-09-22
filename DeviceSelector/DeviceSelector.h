@@ -12,7 +12,7 @@
 
 #include <memory>
 #include <vector>
-#include <AbstractAPOInfo.h>
+#include <DeviceAPOInfo.h>
 #include <QtWidgets/QDialog>
 
 class QDialogButtonBox;
@@ -28,12 +28,12 @@ public:
 	DeviceSelector(QWidget* parent = nullptr);
 
 private:
-	void addDevices(const std::vector<std::shared_ptr<AbstractAPOInfo>>& devices, QTreeWidgetItem* parentNode);
+	void addDevices(const std::vector<std::shared_ptr<DeviceAPOInfo>>& devices, QTreeWidgetItem* parentNode);
 	void onDeviceToggled(QTreeWidgetItem* item, int column);
 	void applyInstallationChanges();
 	void updateApplyButton();
 	bool hasInstallationChanges() const;
-	QString getStateText(const std::shared_ptr<AbstractAPOInfo>& info, bool checked) const;
+	QString getStateText(const std::shared_ptr<DeviceAPOInfo>& info, bool checked) const;
 
 	QTreeWidget* deviceTreeWidget;
 	QDialogButtonBox* buttonBox;
@@ -41,4 +41,4 @@ private:
 	bool populating = false;
 };
 
-Q_DECLARE_METATYPE(std::shared_ptr<AbstractAPOInfo>)
+Q_DECLARE_METATYPE(std::shared_ptr<DeviceAPOInfo>)

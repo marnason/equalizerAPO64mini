@@ -22,7 +22,6 @@
 #include <sstream>
 #include <ObjBase.h>
 #include <aclapi.h>
-#include <authz.h>
 
 #include "StringHelper.h"
 #include "RegistryHelper.h"
@@ -112,95 +111,6 @@ unsigned long RegistryHelper::readDWORDValue(wstring key, wstring valuename)
 	return result;
 }
 
-vector<wstring> RegistryHelper::readMultiValue(wstring key, wstring valuename)
-{
-	vector<wstring> result;
-
-	HKEY keyHandle = openKey(key, KEY_QUERY_VALUE | KEY_WOW64_64KEY);
-
-	LSTATUS status;
-	DWORD type;
-	DWORD bufSize;
-	status = RegQueryValueExW(keyHandle, valuename.c_str(), NULL, &type, NULL, &bufSize);
-	if (status != ERROR_SUCCESS)
-	{
-		RegCloseKey(keyHandle);
-		throw RegistryException(L"Error while reading registry value " + key + L"\\" + valuename + L": " + StringHelper::getSystemErrorString(status));
-	}
-
-	if (type != REG_MULTI_SZ)
-	{
-		RegCloseKey(keyHandle);
-		throw RegistryException(L"Registry value " + key + L"\\" + valuename + L" has wrong type");
-	}
-
-	wchar_t* buf = new wchar_t[bufSize / sizeof(wchar_t) + 1];
-	status = RegQueryValueExW(keyHandle, valuename.c_str(), NULL, NULL, (LPBYTE)buf, &bufSize);
-
-	RegCloseKey(keyHandle);
-
-	if (status != ERROR_SUCCESS)
-	{
-		delete buf;
-		throw RegistryException(L"Error while reading registry value " + key + L"\\" + valuename + L": " + StringHelper::getSystemErrorString(status));
-	}
-
-	size_t length = bufSize / sizeof(wchar_t);
-	// Remove zero-termination
-	while (length > 0 && buf[length - 1] == L'\0')
-		length--;
-
-	size_t start = 0;
-	for (size_t i = 0; i < length; i++)
-	{
-		if (buf[i] == L'\0')
-		{
-			result.push_back(wstring(buf + start, i - start));
-			start = i + 1;
-		}
-	}
-
-	if (length > start)
-		result.push_back(wstring(buf + start, length - start));
-
-	delete buf;
-
-	return result;
-}
-
-vector<unsigned char> RegistryHelper::readBinaryValue(wstring key, wstring valuename)
-{
-	HKEY keyHandle = openKey(key, KEY_QUERY_VALUE | KEY_WOW64_64KEY);
-
-	LSTATUS status;
-	DWORD type;
-	DWORD bufSize;
-	status = RegQueryValueExW(keyHandle, valuename.c_str(), NULL, &type, NULL, &bufSize);
-	if (status != ERROR_SUCCESS)
-	{
-		RegCloseKey(keyHandle);
-		throw RegistryException(L"Error while reading registry value " + key + L"\\" + valuename + L": " + StringHelper::getSystemErrorString(status));
-	}
-
-	if (type != REG_BINARY)
-	{
-		RegCloseKey(keyHandle);
-		throw RegistryException(L"Registry value " + key + L"\\" + valuename + L" has wrong type");
-	}
-
-	vector<unsigned char> result(bufSize, 0);
-	status = RegQueryValueExW(keyHandle, valuename.c_str(), NULL, NULL, result.data(), &bufSize);
-
-	RegCloseKey(keyHandle);
-
-	if (status != ERROR_SUCCESS)
-	{
-		throw RegistryException(L"Error while reading registry value " + key + L"\\" + valuename + L": " + StringHelper::getSystemErrorString(status));
-	}
-
-	return result;
-}
-
 void RegistryHelper::writeValue(wstring key, wstring valuename, wstring value)
 {
 	HKEY keyHandle = openKey(key, KEY_SET_VALUE | KEY_WOW64_64KEY);
@@ -235,34 +145,6 @@ void RegistryHelper::writeMultiValue(wstring key, wstring valuename, wstring val
 	data[value.size() + 1] = L'\0';
 
 	LSTATUS status = RegSetValueExW(keyHandle, valuename.c_str(), 0, REG_MULTI_SZ, (const BYTE*)data, (DWORD)((value.size() + 2) * sizeof(wchar_t)));
-
-	delete data;
-
-	RegCloseKey(keyHandle);
-
-	if (status != ERROR_SUCCESS)
-		throw RegistryException(L"Error while writing to registry value " + key + L"\\" + valuename + L": " + StringHelper::getSystemErrorString(status));
-}
-
-void RegistryHelper::writeMultiValue(wstring key, wstring valuename, vector<wstring> values)
-{
-	HKEY keyHandle = openKey(key, KEY_SET_VALUE | KEY_WOW64_64KEY);
-
-	size_t size = 1;
-	for (wstring value : values)
-		size += value.size() + 1;
-
-	wchar_t* data = new wchar_t[size];
-	size_t offset = 0;
-	for (wstring value : values)
-	{
-		value._Copy_s(data + offset, size * sizeof(wchar_t), value.size());
-		offset += value.size();
-		data[offset++] = L'\0';
-	}
-	data[offset] = L'\0';
-
-	LSTATUS status = RegSetValueExW(keyHandle, valuename.c_str(), 0, REG_MULTI_SZ, (const BYTE*)data, (DWORD)(size * sizeof(wchar_t)));
 
 	delete data;
 
@@ -409,57 +291,6 @@ void RegistryHelper::takeOwnership(wstring key)
 
 	FreeSid(sid);
 	LocalFree(sd);
-}
-
-ACCESS_MASK RegistryHelper::getFileAccessForUser(std::wstring path, unsigned long rid)
-{
-	ACCESS_MASK result;
-
-	PSECURITY_DESCRIPTOR sd;
-	if (GetNamedSecurityInfoW(path.c_str(), SE_FILE_OBJECT, DACL_SECURITY_INFORMATION | OWNER_SECURITY_INFORMATION
-		| GROUP_SECURITY_INFORMATION, NULL, NULL, NULL, NULL, &sd) != ERROR_SUCCESS)
-		throw RegistryException(L"Error in GetNamedSecurityInfoW while getting file access");
-
-	AUTHZ_RESOURCE_MANAGER_HANDLE manager;
-	if (!AuthzInitializeResourceManager(AUTHZ_RM_FLAG_NO_AUDIT, NULL, NULL, NULL, NULL, &manager))
-		throw RegistryException(L"Error in AuthzInitializeResourceManager while getting file access");
-
-	PSID sid = NULL;
-	SID_IDENTIFIER_AUTHORITY authority = SECURITY_NT_AUTHORITY;
-	if (!AllocateAndInitializeSid(&authority, 1, rid, 0, 0, 0, 0, 0, 0, 0, &sid))
-		throw RegistryException(L"Error in AllocateAndInitializeSid while getting file access");
-
-	LUID unusedId = {0};
-	AUTHZ_CLIENT_CONTEXT_HANDLE context;
-	if (!AuthzInitializeContextFromSid(0, sid, manager, NULL, unusedId, NULL, &context))
-		throw RegistryException(L"Error in AuthzInitializeContextFromSid while getting file access");
-
-	AUTHZ_ACCESS_REQUEST request = {0};
-
-	request.DesiredAccess = MAXIMUM_ALLOWED;
-	request.PrincipalSelfSid = NULL;
-	request.ObjectTypeList = NULL;
-	request.ObjectTypeListLength = 0;
-	request.OptionalArguments = NULL;
-
-	AUTHZ_ACCESS_REPLY reply = {0};
-	BYTE buf[1024];
-	RtlZeroMemory(buf, sizeof(buf));
-	reply.ResultListLength = 1;
-	reply.GrantedAccessMask = (ACCESS_MASK*)buf;
-	reply.Error = (DWORD*)(buf + sizeof(ACCESS_MASK));
-
-	if (!AuthzAccessCheck(0, context, &request, NULL, sd, NULL, 0, &reply, NULL))
-		throw RegistryException(L"Error in AuthzAccessCheck while getting file access");
-
-	result = *reply.GrantedAccessMask;
-
-	AuthzFreeContext(context);
-	FreeSid(sid);
-	AuthzFreeResourceManager(manager);
-	LocalFree(sd);
-
-	return result;
 }
 
 bool RegistryHelper::keyExists(wstring key)

@@ -43,7 +43,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem><UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
-      <AdditionalDependencies>..\$(Platform)\$(Configuration)\Common.lib;version.lib;Shlwapi.lib;authz.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\$(Platform)\$(Configuration)\Common.lib;version.lib;Shlwapi.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <QtMoc><PrependInclude>stdafx.h;%(PrependInclude)</PrependInclude></QtMoc>
   </ItemDefinitionGroup>
@@ -55,6 +55,7 @@
     <QtRcc Include="DeviceSelector.qrc" />
     <QtMoc Include="DeviceSelector.h" />
     <ClInclude Include="..\helpers\ServiceHelper.h" />
+    <ClInclude Include="..\helpers\ScopeGuard.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClCompile Include="..\helpers\ServiceHelper.cpp" />
